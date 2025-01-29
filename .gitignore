@@ -1,0 +1,6 @@
+airflow/config/*
+airflow/dags/*
+airflow/logs/*
+airflow/plugins/*
+api_testing/
+.env
