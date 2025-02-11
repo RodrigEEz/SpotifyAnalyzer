@@ -2,7 +2,7 @@ version: "3.9"
 
 x-airflow-common:
   &airflow-common
-  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.10.4}
+  image: airflow-modified
 
   environment:
     &airflow-common-env
@@ -15,7 +15,7 @@ x-airflow-common:
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
-    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:- apache-airflow-providers-apache-spark}
     PG_HOST: "${PG_HOST}"
     PG_USER: "${PG_USER}"
     PG_PASSWORD: "${PG_PASSWORD}"
@@ -27,6 +27,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/plugins:/opt/airflow/plugins
+    - ./pyspark_scripts:/opt/pyspark_scripts
 
   user: "${AIRFLOW_UID:-50000}:0"
 
@@ -257,6 +258,7 @@ services:
     container_name: spark-master
     environment: 
       - SPARK_MODE=master
+      - SPARK_MASTER_WEBUI_PORT=8081
     ports:
       - "7077:7077"
       - "8081:8081"
@@ -276,15 +278,30 @@ services:
     volumes:
       - ./pyspark_scripts:/opt/pyspark_scripts
 
-  spark-submit:
-    image: bitnami/spark:3.5
-    container_name: spark-submit
-    depends_on:
-      - spark-master
+  authentication-server:
+    build: ./authentication-server/
+    environment:
+      SPOTIFY_CLIENT_ID: "${SPOTIFY_CLIENT_ID}"
+      SPOTIFY_CLIENT_SECRET: "${SPOTIFY_CLIENT_SECRET}"
+      SPOTIFY_REDIRECT_URI: "${SPOTIFY_REDIRECT_URI}"
+      FLASK_SECRET_KEY: "${FLASK_SECRET_KEY}"
+      AUTH_DB_USER: "${AUTH_DB_USER}"
+      AUTH_DB_PASSWORD: "${AUTH_DB_PASSWORD}"
+      AUTH_DB_DATABASE: "${AUTH_DB_DATABASE}"
+      AUTH_DB_HOST: "${AUTH_DB_HOST}"
+    ports:
+      - "8888:8888"
     networks:
       - airflow-spark-net
-    volumes:
-      - ./pyspark_scripts:/opt/pyspark_scripts
+
+  auth-keys-db:
+    build: ./auth-db/
+    environment:
+      POSTGRES_USER: "${AUTH_DB_USER}"
+      POSTGRES_PASSWORD: "${AUTH_DB_PASSWORD}"
+      POSTGRES_DB: "${AUTH_DB_DATABASE}"
+    networks:
+      - airflow-spark-net
 
 volumes:
   postgres-db-volume:
