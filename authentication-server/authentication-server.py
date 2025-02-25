@@ -2,7 +2,6 @@ from flask import Flask, request, redirect, session
 import requests
 import urllib.parse
 import os
-from scripts.save_token import insert_user
 import logging
 
 app = Flask(__name__)
@@ -10,7 +9,7 @@ app.secret_key = os.environ['FLASK_SECRET_KEY']
 CLIENT_ID = os.environ['SPOTIFY_CLIENT_ID']
 CLIENT_SECRET = os.environ['SPOTIFY_CLIENT_SECRET']
 REDIRECT_URI = os.environ['SPOTIFY_REDIRECT_URI']
-SCOPE = "user-read-email"
+SCOPE = "user-read-email user-top-read"
 AUTH_URL = "https://accounts.spotify.com/authorize"
 TOKEN_URL = "https://accounts.spotify.com/api/token"
 EMAIL_RETRIEVE_URL = "https://api.spotify.com/v1/me"
@@ -55,15 +54,28 @@ def callback():
         auth_header = {'Authorization': f'Bearer {access_token}'}
         email = requests.get(EMAIL_RETRIEVE_URL, headers=auth_header).json()['email']
 
-        # save in database
-        AUTH_DB_USER = os.environ['AUTH_DB_USER']
-        AUTH_DB_PASSWORD = os.environ['AUTH_DB_PASSWORD']
-        AUTH_DB_DATABASE = os.environ['AUTH_DB_DATABASE']
-        AUTH_DB_HOST =  os.environ['AUTH_DB_HOST']
-        app.logger.info(insert_user(email, access_token, refresh_token, 'users', \
-                    AUTH_DB_USER, AUTH_DB_PASSWORD, AUTH_DB_HOST, AUTH_DB_DATABASE))
+        # call the airflow API to save user info
+        dag_name = 'load_new_user_info'
+        dag_run_url = f'http://airflow-webserver:8080/api/v1/dags/{dag_name}/dagRuns'
 
-        return "Autorización completada. Token almacenado."
+        body = {
+        "dag_run_id": f'load_new_user_{email.split("@")[0]}'
+        ,
+        "conf": {
+            "email": email,
+            "access_token" : access_token,
+            "refresh_token": refresh_token
+            }
+        }
+
+        response = requests.post(
+            dag_run_url,
+            auth=('airflow', 'airflow'), 
+            headers={"Content-Type": "application/json"},
+            json=body
+        )
+
+        return f"Autorización completada. Token almacenado.{response.status_code}"
     else:
         return f"Error al obtener el token: {response.json()}", 400
 

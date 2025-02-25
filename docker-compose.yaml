@@ -21,6 +21,11 @@ x-airflow-common:
     PG_PASSWORD: "${PG_PASSWORD}"
     PG_PORT: "${PG_PORT}"
     PG_DATABASE: "${PG_DATABASE}"
+    AUTH_DB_USER: "${AUTH_DB_USER}" 
+    AUTH_DB_PASSWORD: "${AUTH_DB_PASSWORD}" 
+    AUTH_DB_DATABASE: "${AUTH_DB_DATABASE}" 
+    AUTH_DB_HOST: "${AUTH_DB_HOST}" 
+    AUTH_DB_TABLE: "${AUTH_DB_TABLE}"
 
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/dags:/opt/airflow/dags
@@ -285,14 +290,12 @@ services:
       SPOTIFY_CLIENT_SECRET: "${SPOTIFY_CLIENT_SECRET}"
       SPOTIFY_REDIRECT_URI: "${SPOTIFY_REDIRECT_URI}"
       FLASK_SECRET_KEY: "${FLASK_SECRET_KEY}"
-      AUTH_DB_USER: "${AUTH_DB_USER}"
-      AUTH_DB_PASSWORD: "${AUTH_DB_PASSWORD}"
-      AUTH_DB_DATABASE: "${AUTH_DB_DATABASE}"
-      AUTH_DB_HOST: "${AUTH_DB_HOST}"
     ports:
       - "8888:8888"
     networks:
       - airflow-spark-net
+    volumes:
+      - ./authentication-server:/app
 
   auth-keys-db:
     build: ./auth-db/
