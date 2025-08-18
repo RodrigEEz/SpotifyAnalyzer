@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  auth-server:
+    build: ./auth-server/
+    environment:
+      DB_USERNAME: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+      DB_DATABASE: "${DB_DATABASE}"
+      DB_TABLE_NAME: "${DB_TABLE_NAME}"
+      SPOTIFY_CLIENT_ID: "${CLIENT_ID}"
+      SPOTIFY_CLIENT_SECRET: "${CLIENT_SECRET}"
+      SPOTIFY_REDIRECT_URI: "${REDIRECT_URI}"
+      FLASK_SECRET_KEY: "${FLASK_SECRET_KEY}"
+    ports:
+      - "8888:8888"
+    networks:
+      - spotify-analyzer-net
+
+  auth-keys-db:
+    build: ./auth-db/
+    environment:
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_DATABASE}"
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    networks:
+      - spotify-analyzer-net
+
+networks:
+  spotify-analyzer-net:
+    driver: bridge
