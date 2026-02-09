@@ -70,6 +70,26 @@ def callback():
         #save user info in the database
         save_user_info(**db_info)
 
+        # call airflow dag to initialize user data ingestion
+        dag_name = 'download_new_user_data'
+        dag_run_url = f'http://webserver:8080/api/v1/dags/{dag_name}/dagRuns'
+
+        body = {
+        "dag_run_id": f'load_new_user_{email.split("@")[0]}'
+        ,
+        "conf": {
+            "email": email,
+            "access_token": access_token
+            }
+        }
+
+        response = requests.post(
+            dag_run_url,
+            auth=('admin', 'admin'), 
+            headers={"Content-Type": "application/json"},
+            json=body
+        )
+
         return f"Authorization complete. Token saved.{response.status_code}"
     else:
         return f"Error obtaining token: {response.json()}", 400

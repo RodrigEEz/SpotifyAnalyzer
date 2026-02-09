@@ -12,9 +12,16 @@ x-airflow-common:
     AIRFLOW_ADMIN_USER: "${AIRFLOW_ADMIN_USERNAME}"
     AIRFLOW_ADMIN_PASSWORD: "${AIRFLOW_ADMIN_PASSWORD}"
     AIRLFLOW_ADMIN_EMAIL: "${AIRFLOW_ADMIN_EMAIL}"
+    MINIO_HOST: "minio"
+    MINIO_PORT: "9000"
+    MINIO_ACCESS_KEY: "${MINIO_APP_USER}"
+    MINIO_SECRET_KEY: "${MINIO_APP_PASSWORD}"
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-minio==7.2.20}
+
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/plugins:/opt/airflow/plugins
     - ./spark/jobs:/opt/airflow/jobs
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
