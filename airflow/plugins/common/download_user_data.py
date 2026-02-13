@@ -22,7 +22,7 @@ def download_user_data(new_user, **context):
          length=len(json.dumps(data).encode('utf-8'))
       )
 
-   email, access_token  = context['dag_run'].conf.values()
+   email, access_token, _  = context['dag_run'].conf.values()
 
    headers = {'Authorization' : f'Bearer {access_token}'}
 

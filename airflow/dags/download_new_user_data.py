@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from common.download_user_data import download_user_data
+from common.save_user_info import save_user_tokens, save_user_updates
 
 dag =  DAG( 
       dag_id='download_new_user_data',
@@ -18,5 +19,18 @@ with dag:
       provide_context=True,
       op_args=[True]
    )
+
+   save_user_tokens = PythonOperator(
+      task_id='save_user_tokens_task',
+      python_callable=save_user_tokens
+   )
+   
+   save_user_updates = PythonOperator(
+      task_id='save_user_updates_task',
+      python_callable=save_user_updates
+   )
+
+
+   download_new_user_data >> save_user_tokens >> save_user_updates
 
 

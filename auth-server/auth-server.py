@@ -2,7 +2,6 @@ from flask import Flask, request, redirect
 import requests
 import urllib
 import os
-from save_user_info import save_user_info
 
 app = Flask(__name__)   
 
@@ -54,22 +53,6 @@ def callback():
         auth_header = {'Authorization': f'Bearer {access_token}'}
         email = requests.get(EMAIL_RETRIEVE_URL, headers=auth_header).json()['email']
 
-        #db information for saving user
-        db_info = {
-            "email": email,
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "username": os.environ['DB_USERNAME'],
-            "password": os.environ['DB_PASSWORD'],
-            "host": os.environ['DB_HOST'],
-            "port": os.environ['DB_PORT'],
-            "database": os.environ['DB_DATABASE'],
-            "table_name": os.environ['DB_TABLE_NAME']
-        }
-
-        #save user info in the database
-        save_user_info(**db_info)
-
         # call airflow dag to initialize user data ingestion
         dag_name = 'download_new_user_data'
         dag_run_url = f'http://webserver:8080/api/v1/dags/{dag_name}/dagRuns'
@@ -79,7 +62,8 @@ def callback():
         ,
         "conf": {
             "email": email,
-            "access_token": access_token
+            "access_token": access_token,
+            "refresh_token": refresh_token
             }
         }
 
