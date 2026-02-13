@@ -22,7 +22,8 @@ with dag:
 
    save_user_tokens = PythonOperator(
       task_id='save_user_tokens_task',
-      python_callable=save_user_tokens
+      python_callable=save_user_tokens,
+      op_kwargs={'user_type':'new'}
    )
    
    save_user_updates = PythonOperator(

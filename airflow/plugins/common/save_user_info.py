@@ -39,11 +39,21 @@ def save_user_tokens(**kwargs):
       refresh_token (str): Refresh token for the user.
    """
 
-   dag_run = kwargs.get('dag_run')
+   user_type = kwargs.get('user_type')
 
-   email = dag_run.conf.get("email")
-   access_token = dag_run.conf.get("access_token")
-   refresh_token = dag_run.conf.get("refresh_token")
+
+   if user_type == 'new':
+
+      dag_run = kwargs.get('dag_run')
+      email = dag_run.conf.get("email")
+      access_token = dag_run.conf.get("access_token")
+      refresh_token = dag_run.conf.get("refresh_token")
+
+   elif user_type == 'existing':
+
+      email = kwargs.get('email')
+      access_token = kwargs.get('access_token')
+      refresh_token = kwargs.get('access_token')
 
    engine = create_connection()
 
@@ -85,9 +95,9 @@ def save_user_updates(**kwargs):
    table = os.environ.get('AUTH_DB_UPDATES_TABLE_NAME')
    update_table = metadata.tables[table]
 
-   mode = kwargs.get('mode')
+   user_type = kwargs.get('user_type')
 
-   if mode is None:
+   if user_type == 'new' :
 
       short_term = update_date
       medium_term = update_date
@@ -107,7 +117,7 @@ def save_user_updates(**kwargs):
          print(f"Error saving user update info: {e}")
          return f"Error saving user update info: {e}"
    
-   else:
+   elif user_type == 'existing' :
 
       if mode == "short_term":
          stmt = update_table.update().where(update_table.c.email == email).values(last_update_short_term=update_date)
