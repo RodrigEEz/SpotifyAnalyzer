@@ -16,8 +16,7 @@ with dag:
    download_new_user_data = PythonOperator(
       task_id='download_new_user_data_task',
       python_callable=download_user_data,
-      provide_context=True,
-      op_args=[True]
+      op_kwargs={'user_type':'new'}
    )
 
    save_user_tokens = PythonOperator(
@@ -28,7 +27,8 @@ with dag:
    
    save_user_updates = PythonOperator(
       task_id='save_user_updates_task',
-      python_callable=save_user_updates
+      python_callable=save_user_updates,
+      op_kwargs={'user_type':'new'}
    )
 
 
